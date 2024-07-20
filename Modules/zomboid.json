@@ -1,0 +1,12 @@
+{
+    "Server": {
+
+    },
+
+    "Client": {
+        "ZomboidPath": {
+            "Windows": "Test"
+        }
+    }
+
+}
