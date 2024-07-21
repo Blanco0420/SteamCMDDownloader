@@ -73,6 +73,9 @@ def installSteamCmdArch():
 
 def installSteamCmdDeb():
     run("sudo apt update; sudo apt install software-properties-common; sudo apt-add-repository non-free -y; sudo dpkg --add-architecture i386; sudo apt update", stdout=True)
+    run('echo steam steam/question select "I AGREE" | sudo debconf-set-selections')
+    run('echo steam steam/license note '' | sudo debconf-set-selections')
+    run('sudo apt install steamcmd -y')
 
 def main():
     if isWindows():
