@@ -1,12 +1,4 @@
 {
-    "Server": {
-
-    },
-
-    "Client": {
-        "ZomboidPath": {
-            "Windows": "Test"
-        }
-    }
-
+    "workshopid": 108600,
+    "Path": ["C:", "Users", "<user>", "Zomboid", "mods"]
 }
