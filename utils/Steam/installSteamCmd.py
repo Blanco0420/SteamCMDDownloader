@@ -72,7 +72,7 @@ def installSteamCmdArch():
     shutil.rmtree(os.path.join(os.getcwd(), "steamCmdInstaller"))
 
 def installSteamCmdDeb():
-    run("sudo apt update; sudo apt install software-properties-common; sudo apt-add-repository non-free; sudo dpkg --add-architecture i386; sudo apt update", stdout=True)
+    run("sudo apt update; sudo apt install software-properties-common; sudo apt-add-repository non-free -y; sudo dpkg --add-architecture i386; sudo apt update", stdout=True)
 
 def main():
     if isWindows():
