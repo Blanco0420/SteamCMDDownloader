@@ -13,15 +13,26 @@ def ErrorMessage():
     exit()
     
 
+def run(command, stdout=False):
+    try:
+        res = subprocess.run(command, shell=True ,check=True, stdout=(None if stdout else subprocess.PIPE), stderr=subprocess.PIPE)
+    except subprocess.CalledProcessError as e:
+        print("Error Occurred during this command:")
+        print(command)
+        print("Details:")
+        print(e.stderr)
+        ErrorMessage()
+    return res
+
 
 def checkInstalled():
-    command = "steamcmd +quit"
+    command = ["steamcmd +quit"]
     if isWindows():
         command = [os.path.join(os.getcwd(), "steamcmd", "steamcmd.exe"), command]
     for x in command:
         try:
-            process = subprocess.Popen(x, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            return process.returncode == 0
+            return run(x).returncode == 0
+            
         except FileNotFoundError:
             pass
         
@@ -32,19 +43,6 @@ def downloadSteamCmdWin():
     steamcmdPath = os.path.join(os.getcwd(), "steamcmd")
     shutil.unpack_archive(os.path.join(steamcmdPath, "steamcmd.zip"), steamcmdPath)
     os.remove(os.path.join(steamcmdPath, "steamcmd.zip"))
-
-
-def run(command, stdout=False):
-    try:
-        res = subprocess.run(command, shell=True,check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        if stdout:
-            print(res.stdout)
-    except subprocess.CalledProcessError as e:
-        print("Error Occurred during this command:")
-        print(command)
-        print("Details:")
-        print(e.stderr)
-        ErrorMessage()
         
     
 def installSteamCmdArch():
@@ -69,7 +67,7 @@ def installSteamCmdArch():
 
     os.chdir('steamCmdInstaller')
 
-    run(['makepkg', '-si', '--noconfirm'])
+    run(['makepkg', '-si', '--noconfirm'], True)
     os.chdir('../')
     shutil.rmtree(os.path.join(os.getcwd(), "steamCmdInstaller"))
 
