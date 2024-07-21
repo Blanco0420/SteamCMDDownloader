@@ -14,7 +14,7 @@ def menu():
         menu()
 
     if choice == 1:
-        installSteamCmd.installSteamCmdArch()
+        installSteamCmd.main()
 
 
 menu()

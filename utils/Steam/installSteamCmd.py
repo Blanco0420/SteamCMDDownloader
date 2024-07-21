@@ -34,9 +34,11 @@ def downloadSteamCmdWin():
     os.remove(os.path.join(steamcmdPath, "steamcmd.zip"))
 
 
-def run(command):
+def run(command, stdout=False):
     try:
-        subprocess.run(command, shell=True,check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        res = subprocess.run(command, shell=True,check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if stdout:
+            print(res.stdout)
     except subprocess.CalledProcessError as e:
         print("Error Occurred during this command:")
         print(command)
