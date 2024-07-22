@@ -1,26 +1,23 @@
 import os
 import platform
+from utils.systemUtils.osUtils import OsUtils
 
-class DistroInfo:
+class MachineInfo:
     def __init__(self) -> None:
         pass
+        self.osUtils = OsUtils()
         
-    def isWindows():
+    def isWindows(self):
         if platform.system() == "Windows":
             return True
         return False
 
 
-    def getUser():
-        if os.getenv("SUDO_USER") == None:
-            user = os.getlogin()
-        else:
-            user = os.getenv("SUDO_USER")
-
-        return user
+    def getUser(self):
+        return os.getenv("SUDO_USER") or os.getlogin()
 
 
-    def getOsReleaseinfo():
+    def getOsReleaseinfo(self):
         try:
             with open('/etc/os-release') as f:
                 lines = f.readlines()
@@ -30,8 +27,12 @@ class DistroInfo:
             return {}
         
 
+# FIXME: Only check distro info once. Script is supported if steamcmd is installed
+
     def getDistroBase(self):
         info = self.getOsReleaseinfo()
+        from ..Steam.installSteamCmd import SteamCMD
+        
         if 'ID' in info:
             id = info['ID'].lower()
             if id == "debian":
@@ -42,16 +43,17 @@ class DistroInfo:
                 return 'arch'
             elif id in ['centos', 'rhel', 'fedora']:
                 print("Sorry, RedHat systems are not supported by this script yet.")
-                from ..Steam.installSteamCmd import ErrorMessage
-                ErrorMessage()
+                self.osUtils.ErrorMessage()
                 exit()
             elif id == "gentoo":
-                return 'gentoo'
+                print("Sorry, gentoo machine are not supported by this script yet.")
+                self.osUtils.ErrorMessage()
         
         print("Error, unable to determine distro base. Please choose from the list:")
         print("1) Arch based")
         print("2) Debian based")
-        print("3) Gentoo based")
+        print("3) RHEL (Red-Hat Enterprise Linux) based")
+        print("4) Gentoo based")
         print()
         try:
             choice = int(input("Choice:"))

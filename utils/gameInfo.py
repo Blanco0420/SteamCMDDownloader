@@ -1,29 +1,33 @@
 from dotenv import load_dotenv
 import json
 import os
-from .machineBased.machineInfo import DistroInfo
+from utils.systemUtils.machineInfo import MachineInfo
 
 
 class GameInfo:
-    def __init__(self) -> None:
-        load_dotenv()
-
-    def getVariable(var):
-        return os.getenv(var)
-
     def openFile(self):
-        with open(os.path.join("Modules", f"{self.getVariable("GAMENAME")}.json"))  as f:
+        with open(os.path.join(os.getcwd(), "Modules", f"{self.gameName}.json"))  as f:
                 f = json.load(f)
                 return f
+        
+    def __init__(self) -> None:
+        load_dotenv()
+        self.gameName = self.getVariable("GAMENAME")
+        self.gameInfo = self.openFile()
+
+
+    def getVariable(self, var):
+        return os.getenv(var)
+
 
     def getGameId(self):
-        return self.openFile()["workshopid"]
+        return self.gameInfo["workshopId"]
 
-    def getInstallLocation(self):
+
+    def getDefaultClientLocation(self):
         path = []
-        for x in self.openFile()["modFolder"]:
-            if x == "<user>":
-                x = DistroInfo().getUser()
+        for x in self.openFile()["fileInformation"]["defaultClientPath"]:
+            if x == "<currentUser>":
+                x = MachineInfo().getUser()
             path.append(x)
-            print(os.path.join(*path))
-        return path
+        return os.path.join(*path)

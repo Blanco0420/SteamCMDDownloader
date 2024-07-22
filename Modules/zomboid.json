@@ -1,4 +1,11 @@
 {
-    "workshopid": 108600,
-    "Path": ["C:", "Users", "<user>", "Zomboid", "mods"]
+    "workshopId": "108600",
+
+    "fileInformation":
+    {
+        "defaultClientPath": ["C:", "Users", "<currentUser>", "Zomboid", "mods"],
+        "pathToModContents": ["mods"],
+        "pathToModInfoFile": ["mod.info"],
+        "modNameValueFromInfoFile": "id="
+    }
 }
