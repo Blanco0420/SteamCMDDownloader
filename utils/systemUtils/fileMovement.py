@@ -64,37 +64,6 @@ class FileManagement:
 
 
     def moveFiles(self):
-        # for workshopFolder in os.listdir():
-        #     modFolder = os.path.join(steamcmdPath, workshopFolder)       
-        #     if os.listdir(modFolder)[0] == "mods":
-        #         print(extractDir)
-        #         shutil.copytree(os.path.join(modFolder, "mods"), extractDir, dirs_exist_ok=True)
-        #         continue
-
-        #     modInfoFile = os.path.join(modFolder, 'mod.info')
-        #     if not os.path.exists(modInfoFile):
-        #         raise LookupError(f"Cannot find mod.info in {modFolder}")
-
-        #     with open(modInfoFile, 'r') as file:
-        #         modName = None
-        #         for line in file:
-        #             line = file.readline()
-        #             if not line.startswith("id="):
-        #                 continue
-        #             modName = line[3:].strip("\n")
-        #             continue
-
-        #         if modName is None:
-        #             file.close()
-        #             raise LookupError(f"No ID found in {modInfoFile}") 
-
-        #         file.close()
-
-        #     print(modFolder, os.path.join(extractDir, modName))
-        #     shutil.copytree(modFolder, os.path.join(extractDir, modName))
-
-
-
         extractDir = self.getDirectory()
         if os.path.exists(extractDir):
             print("Extract directory exists. \033[1mOverwrite?\n")
@@ -116,25 +85,17 @@ class FileManagement:
                 modFolderPath = os.path.join(steamcmdPath, workshopFolder, *self.fileInfo["pathToModContents"])
             except KeyError:
                 modFolderPath = os.path.join(steamcmdPath, workshopFolder)
-
             # Check for parent folder
             modFolderFiles = os.listdir(modFolderPath)
             if len(modFolderFiles) > 1:
                 if not self.checkIfHasFiles(modFolderPath):
-                    shutil.copytree(modFolderPath, extractDir)
+                    shutil.copytree(modFolderPath, extractDir, dirs_exist_ok=True)
                     continue
-
                 # Has more than 1 item including files
                 modName = self.findModFolderName(modFolderPath)
                 newModDir = os.path.join(extractDir, modName)
-                os.mkdir(newModDir)
                 shutil.copytree(modFolderPath, newModDir)
-            print(os.listdir(modFolderPath)[0])
-            # FIXME: Idk it doesn't extract
-            shutil.copytree(os.path.join(modFolderPath, os.listdir(modFolderPath)[0]), extractDir)
-                
-
-
-if __name__ == "__main__":
-    FileManagement().moveFiles()
+                continue
+            shutil.copytree(modFolderPath, extractDir, dirs_exist_ok=True)
+            continue
 

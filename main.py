@@ -1,6 +1,5 @@
-import utils.Steam
-import utils.Steam.downloadWorkshopContent
-import utils.Steam.installSteamCmd
+from utils.Steam.steamUtils import Steam, SteamCMD
+from utils.systemUtils.fileMovement import FileManagement
 
 def menu():
     choice = 0
@@ -10,8 +9,7 @@ def menu():
     print()
 
     try:
-        # choice = int(input("Choice: "))
-        choice = 1
+        choice = int(input("Choice: "))
     except ValueError:
         print("Error, invalid choice. Please try again")
         print()
@@ -19,12 +17,14 @@ def menu():
 
     match choice:
         case 1:
-            utils.Steam.downloadWorkshopContent.Steam().main()
+            Steam().main()
         case 2:
-            utils.Steam.installSteamCmd.SteamCMD().installSteamCmd()
+            SteamCMD().installSteamCmd()
         case 3:
             print("Exiting program...")
-    menu()
+            exit()
+            
+menu()
         
     
 

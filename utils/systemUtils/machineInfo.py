@@ -31,7 +31,6 @@ class MachineInfo:
 
     def getDistroBase(self):
         info = self.getOsReleaseinfo()
-        from ..Steam.installSteamCmd import SteamCMD
         
         if 'ID' in info:
             id = info['ID'].lower()
