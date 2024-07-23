@@ -1,5 +1,6 @@
 import os
 from utils.gameInfo import GameInfo
+from utils.systemUtils.osUtils import OsUtils, Logger
 import shutil
 
 class FileManagement:
@@ -7,17 +8,14 @@ class FileManagement:
     def __init__(self):
         self.gameInfo = GameInfo()
         self.fileInfo = self.gameInfo.gameInfo["fileInformation"]
+        self._os = OsUtils()
 
     def getDirectory(self):
 
         clientDefaultLocation = self.gameInfo.getDefaultClientLocation()
         extractDir = ""
-        print("\n\n\n")
-        print(f"1) Move to Default location: {clientDefaultLocation}")
-        print(f"2) Move to local 'mods' folder: {os.path.join(os.getcwd(), "mods")}")
-        print(f"3) Move to custom path")
-        # FIXME: Choice enter errors
-        choice = int(input("\nChoice: "))
+        choices = [f"Move to Default location: {clientDefaultLocation}", f"Move to local 'mods' folder: {os.path.join(os.getcwd(), "mods")}", "Move to custom path"]
+        choice = self._os.choice(choices, 1)
         match choice:
             case 1: 
                 extractDir = clientDefaultLocation
@@ -44,17 +42,8 @@ class FileManagement:
             print("A mod info file was not found. Please choose a name for the mod file from the list:")
             i = 1
             files = os.listdir(path)
-            for x in files:
-                print(f"{i}) {x}")
-                i += 1
-            print()
-            choice = int(input("Choice: "))
-            while True:
-                if choice < 1 or choice > len(files):
-                    print("Invalid Choice. Please try again")
-                    choice = int(input("Choice: "))
-                    continue
-                return files[choice]
+            choice = self._os.choice(files)
+            return files[choice]
 
     def checkIfHasFiles(self, path):
         for x in os.listdir(path):
@@ -66,18 +55,15 @@ class FileManagement:
     def moveFiles(self):
         extractDir = self.getDirectory()
         if os.path.exists(extractDir):
-            print("Extract directory exists. \033[1mOverwrite?\n")
-            choice = str
-            while choice not in ["y","n", ""]:
-                choice = input("\033[0m[Y]es/[N]o (Y): ")
-                if choice == "y" or choice == "":
-                    shutil.rmtree(extractDir)
-                    break
-                elif choice == "n":
-                    print("Exiting....")
-                    exit()
-        # TODO: Make this value available from a class for all other ocurrences
-        steamcmdPath = os.path.join(os.getcwd(), "steamCMD", "steamapps", "workshop", "content", self.gameInfo.getGameId())
+            _2 = Logger()
+            if self._os.confirm("Extract directory exists. It will be overridden", True):
+                shutil.rmtree(extractDir)
+            else:
+                _2.logLog("Exiting program...")
+                exit()
+                
+        from utils.Steam.steamUtils import Steam
+        steamcmdPath = Steam().workshopContentPath
         for workshopFolder in os.listdir(steamcmdPath):
             
             # Add nested folders if they exist. e.g. <workshopFolder>/mods/sub/subsub
@@ -98,4 +84,5 @@ class FileManagement:
                 continue
             shutil.copytree(modFolderPath, extractDir, dirs_exist_ok=True)
             continue
-
+            
+        return

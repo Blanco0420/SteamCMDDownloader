@@ -1,35 +1,48 @@
-import requests
+from requests import get
+from requests.exceptions import InvalidSchema, ConnectionError
 from bs4 import BeautifulSoup
-from utils.systemUtils.machineInfo import MachineInfo
+from utils.systemUtils.osUtils import MachineInfo
 from utils.systemUtils.fileMovement import FileManagement
 from dotenv import load_dotenv
 import os
 from utils.gameInfo import GameInfo
 import shutil
 import urllib
-from utils.systemUtils.osUtils import OsUtils
+from utils.systemUtils.osUtils import OsUtils, Logger
 import subprocess
 import git
 load_dotenv()
 
 class Steam:
-    def __init__(self):
-        pass
+    def __init__(self) -> None:
+        _1 = OsUtils()
+        _2 = GameInfo()
+        self.steamCMDPath = _1.joinPath([_1.cwd, "steamCMD"])
+        self.workshopContentPath = _1.joinPath([self.steamCMDPath, "steamapps", "workshop", "content", _2.gameId])
+        self.isWindows = _1.isWindows()
+        self.cwd = _1.cwd
+
+class Workshop(Steam):
+    def __init__(self) -> None:
+        _1 = OsUtils()
+        super().__init__()
         self.workshopId = GameInfo().getGameId()
-        self.isWindowsMachine = MachineInfo().isWindows()
-        self.cwd = os.getcwd()
-        self.steamcmdInstallPath = os.path.join(self.cwd, "steamCMD")
-        if self.isWindowsMachine:
-            self.downloadString = os.path.join(self.cwd, "steamCMD", "steamcmd.exe ") + "+login anonymous "
+        self.workshopURL = _1.getEnvVariable("WORKSHOPURL")
+        # TODO: Move this?
+        if self.isWindows:
+            self.downloadString =  + "+login anonymous "
         else:
             self.downloadString = f"steamcmd +force_install_dir {os.path.join(self.cwd, "steamCMD")} " + "+login anonymous "
             
-    def getWorkshopIds(self):
-        response = requests.get(os.getenv("WORKSHOPURL"))
-        soup = BeautifulSoup(response.content, 'html.parser')
-        workshopElements = soup.findAll('div', class_="workshopItem")
+    def getWorkshopIds(self) -> list:
+        try:
+            _response = get(os.getenv("WORKSHOPURL"))
+        except (ConnectionError, InvalidSchema) as e:
+            print("Error, invalid URL provided for WORKSHOPURL in env file. Please provide a valid steam workshop collection")
+            exit()
+        workshopElements = BeautifulSoup(_response.content, 'html.parser').findAll('div', class_="workshopItem")
+
         mod_ids = []
-        # TESTING PURPOSES
         i = 0
         for x in workshopElements:
             mod_ids.append(x.find('a').get('href').split('id=')[1])
@@ -52,11 +65,12 @@ class Steam:
         FileManagement().moveFiles()
 
 
-class SteamCMD:
+class SteamCMD(Steam):
     def checkInstalled(self):
+        _os = OsUtils()
         commands = []
-        if self.machineInfo.isWindows():
-            commands = [os.path.join(os.getcwd(), "steamCMD", "steamcmd.exe"), "steamcmd"]
+        if self.isWindows:
+            commands = [_os.joinPath([self.steamCMDPath, "steamcmd.exe"]), "steamcmd"]
         else:
             commands = ["steamcmd"]
         for command in commands:
@@ -69,36 +83,41 @@ class SteamCMD:
         return False
     
 
-    def __init__(self):
+    def __init__(self) -> None:
+        super().__init__()
         self.machineInfo = MachineInfo()
         self.distroBase = self.machineInfo.getDistroBase()
         self.osUtils = OsUtils()
-        self.cwd = self.osUtils.getCwd()
         pass
 
 
-    def downloadSteamCmdWin(self):
+    def steamCmdErrorMessage(self) -> None:
+        print("Error installing steamcmd. Please look at the Valve page for information on how to install steamcmd for your machine.")
+        print("https://developer.valvesoftware.com/wiki/SteamCMD")
+        print("Exiting...")
+
+
+    def __downloadSteamCmdWin(self):
+        _os = OsUtils()
         print(f"Detected Windows Machine")
-        os.makedirs(os.path.join(self.cwd, "steamCMD"), exist_ok=True)
-        urllib.request.urlretrieve("https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip", os.path.join(self.cwd, "steamCMD", "steamcmd.zip"))
-        steamcmdPath = os.path.join(self.cwd, "steamcmd")
-        shutil.unpack_archive(os.path.join(steamcmdPath, "steamcmd.zip"), steamcmdPath)
-        os.remove(os.path.join(steamcmdPath, "steamcmd.zip"))
+        os.makedirs(_os.joinPath(self.cwd, "steamCMD"), exist_ok=True)
+        urllib.request.urlretrieve("https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip", _os.joinPath(self.steamCMDPath, "steamcmd.zip"))
+        shutil.unpack_archive(_os.joinPath(self.steamCMDPath, "steamcmd.zip"), self.steamCMDPath)
+        os.remove(_os.joinPath(self.steamCMDPath, "steamcmd.zip"))
             
         
-    def installSteamCmdArch(self):
+    def __installSteamCmdArch(self):
         print(f"Detected {self.distroBase} based Distro.")
         self.osUtils.run('sudo pacman -S --needed base-devel git')
         
         try:
             print("Cloning steamcmd...")
-            git.Repo.clone_from('https://aur.archlinux.org/steamcmd.git', "steamCmdInstaller")
+            git.Repo.clone_from('https://au.archlinux.org/steamcmd.git', "steamCmdInstaller")
         except git.GitCommandError as e:
             if not "already exists and is not an empty directory" in e.stderr:
                 print("Fatal Error ocurred with cloning the steamcmd package. Find error details below:")
-                print(e.stderr.strip())
-                print(f"Exit Code: {e.status}")
-                exit()
+                Logger().logCrit()
+                
             choice = ""
             # TODO: Make global choice handler
             # FIXME: This doesn't check n
@@ -116,7 +135,7 @@ class SteamCMD:
         shutil.rmtree(os.path.join(self.cwd, "steamCmdInstaller"))
 
 
-    def installSteamCmdDeb(self):
+    def __installSteamCmdDeb(self):
         print(f"Detected {self.distroBase} based distro")
         self.osUtils.run("sudo apt update; sudo apt install software-properties-common; sudo apt-add-repository non-free -y; sudo dpkg --add-architecture i386; sudo apt update", stdout=True)
         self.osUtils.run('echo steam steam/question select "I AGREE" | sudo debconf-set-selections')
@@ -124,7 +143,7 @@ class SteamCMD:
         self.osUtils.run('sudo apt install steamcmd -y', stdout=True)
 
 
-    def installSteamCmdUbuntu(self):
+    def __installSteamCmdUbuntu(self):
         print(f"Detected {self.distroBase} based distro")
         self.osUtils.run('sudo add-apt-repository multiverse -y; sudo dpkg --add-architecture i386; sudo apt update ')
         self.osUtils.run('echo steam steam/question select "I AGREE" | sudo debconf-set-selections')
@@ -133,24 +152,31 @@ class SteamCMD:
 
 
     def installSteamCmd(self):
-        if self.machineInfo.isWindows():
-            self.downloadSteamCmdWin()
+        if self.checkInstalled():
+            print("steamcmd is already installed")
+            print("\n")
+            return
+        if self.isWindows:
+            self.__downloadSteamCmdWin()
             return
         match self.distroBase:
             case "arch":
-                self.installSteamCmdArch()
+                self.__installSteamCmdArch()
             case "debian":
-                self.installSteamCmdDeb()
+                self.__installSteamCmdDeb()
             case "ubuntu":
-                self.installSteamCmdUbuntu()
-                self.osUtils.ErrorMessage()
-        print("SteamCMD installed!")
+                self.__installSteamCmdUbuntu()
+            case "rhel":
+                print("Error, this script does not support RHEL distros yet.")
+                self.steamCmdErrorMessage()
+            case "gentoo":
+                print("Error, this script does not support RHEL distros yet.")
+                self.steamCmdErrorMessage()
+        # print("SteamCMD installed!")
         return
 
     def checkSteamCmd(self):
         if self.checkInstalled():
-            print("steamcmd is already installed")
-            print("\n")
             return
         print("steamcmd binary not found. Do you want to install it now?")
         choice = input("[Y]es/[N]o (Y)").lower()

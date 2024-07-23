@@ -3,7 +3,8 @@
 
     "fileInformation":
     {
-        "defaultClientPath": ["C:", "Users", "<currentUser>", "Zomboid", "mods"],
+        "defaultWindowsClientPath": ["C:", "Users", "<currentUser>", "Zomboid", "mods"],
+        "defaultLinuxClientPath": ["/home", "<currentUser>", "Zomboid", "mods"],
         "pathToModContents": ["mods"],
         "pathToModInfoFile": ["mod.info"],
         "modNameValueFromInfoFile": "id="

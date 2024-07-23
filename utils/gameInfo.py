@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import json
 import os
-from utils.systemUtils.machineInfo import MachineInfo
+from utils.systemUtils.osUtils import MachineInfo, OsUtils
 
 
 class GameInfo:
@@ -11,13 +11,13 @@ class GameInfo:
                 return f
         
     def __init__(self) -> None:
+        _1 = OsUtils()
         load_dotenv()
-        self.gameName = self.getVariable("GAMENAME")
+        self.gameName = _1.getEnvVariable("GAMENAME")
         self.gameInfo = self.openFile()
+        self.gameId = self.getGameId()
+        self.isWindows = _1.isWindows()
 
-
-    def getVariable(self, var):
-        return os.getenv(var)
 
 
     def getGameId(self):
@@ -26,8 +26,14 @@ class GameInfo:
 
     def getDefaultClientLocation(self):
         path = []
-        for x in self.openFile()["fileInformation"]["defaultClientPath"]:
+        defaultPath = ""
+        if self.isWindows:
+            defaultPath = self.openFile()["fileInformation"]["defaultWindowsClientPath"]
+        else:
+            defaultPath = self.openFile()["fileInformation"]["defaultLinuxClientPath"]
+        _1 = OsUtils()
+        for x in defaultPath:
             if x == "<currentUser>":
-                x = MachineInfo().getUser()
+                x = _1.getUser()
             path.append(x)
-        return os.path.join(*path)
+        return _1.joinPath(path)
