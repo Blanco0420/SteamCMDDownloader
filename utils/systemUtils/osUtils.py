@@ -125,7 +125,6 @@ class OsUtils:
     
     def getEnvBool(self, variable: str, default: bool) -> bool:
         _ = os.getenv(variable, str(default)).lower() in ['true', '1', 't']
-        print(_)
         return _
 
     # Public Functions:
