@@ -21,6 +21,23 @@ class Steam:
         self.workshopContentPath = _1.joinPath([self.steamCMDPath, "steamapps", "workshop", "content", _2.gameId])
         self.isWindows = _1.isWindows()
         self.cwd = _1.cwd
+        self.steamCMDExec = self.getSteamCMDExec()
+
+    def getSteamCMDExec(self):
+        _os = OsUtils()
+        commands = []
+        if self.isWindows:
+            commands = [_os.joinPath([self.steamCMDPath, "steamcmd.exe"]), "steamcmd"]
+        else:
+            commands = ["steamcmd"]
+        for command in commands:
+            try:
+                result = subprocess.run([command, '+quit'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                if result.returncode == 0:
+                    return command
+            except (FileNotFoundError, subprocess.CalledProcessError):
+                continue
+        return None
 
 class Workshop(Steam):
     def __init__(self) -> None:
@@ -28,7 +45,6 @@ class Workshop(Steam):
         super().__init__()
         self.workshopId = GameInfo().getGameId()
         self.workshopURL = _1.getEnvVariable("WORKSHOPURL")
-        # TODO: Move this?
         if self.isWindows:
             self.downloadString =  + "+login anonymous "
         else:
@@ -36,7 +52,7 @@ class Workshop(Steam):
             
     def getWorkshopIds(self) -> list:
         try:
-            _response = get(os.getenv("WORKSHOPURL"))
+            _response = get(self.workshopURL)
         except (ConnectionError, InvalidSchema) as e:
             print("Error, invalid URL provided for WORKSHOPURL in env file. Please provide a valid steam workshop collection")
             exit()
@@ -66,21 +82,6 @@ class Workshop(Steam):
 
 
 class SteamCMD(Steam):
-    def checkInstalled(self):
-        _os = OsUtils()
-        commands = []
-        if self.isWindows:
-            commands = [_os.joinPath([self.steamCMDPath, "steamcmd.exe"]), "steamcmd"]
-        else:
-            commands = ["steamcmd"]
-        for command in commands:
-            try:
-                result = subprocess.run([command, '+quit'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                if result.returncode == 0:
-                    return True
-            except (FileNotFoundError, subprocess.CalledProcessError):
-                continue
-        return False
     
 
     def __init__(self) -> None:
@@ -112,27 +113,23 @@ class SteamCMD(Steam):
         
         try:
             print("Cloning steamcmd...")
-            git.Repo.clone_from('https://au.archlinux.org/steamcmd.git', "steamCmdInstaller")
+            git.Repo.clone_from('https://aur.archlinux.org/steamcmd.git', "steamCmdInstaller")
         except git.GitCommandError as e:
+
             if not "already exists and is not an empty directory" in e.stderr:
                 print("Fatal Error ocurred with cloning the steamcmd package. Find error details below:")
                 Logger().logCrit()
-                
-            choice = ""
-            # TODO: Make global choice handler
-            # FIXME: This doesn't check n
-            while choice not in ["y","n", ""]:
-                choice = input("the folder 'steamCmdInstaller' exists already. \033[1mOverwrite?\n \033[0m[Y]es/[N]o (Y):").lower()
-                if choice == "y" or choice == "":
-                    shutil.rmtree(os.path.join(self.cwd, "steamCmdInstaller"))
-                    git.Repo.clone_from('https://aur.archlinux.org/steamcmd.git', "steamCmdInstaller")
-                    break
+
+
+            if self.osUtils.confirm("the folder 'steamCmdInstaller' exists already.", "Overwrite?", True):
+                shutil.rmtree(os.path.join(self.cwd, "steamCmdInstaller"))
+                git.Repo.clone_from('https://aur.archlinux.org/steamcmd.git', "steamCmdInstaller")
 
         os.chdir('steamCmdInstaller')
 
-        subprocess.call(['makepkg -i --noconfirm'], shell=True)
+        subprocess.call(['makepkg -si --noconfirm'], shell=True)
         os.chdir('../')
-        shutil.rmtree(os.path.join(self.cwd, "steamCmdInstaller"))
+        # shutil.rmtree(os.path.join(self.cwd, "steamCmdInstaller"))
 
 
     def __installSteamCmdDeb(self):
@@ -152,9 +149,7 @@ class SteamCMD(Steam):
 
 
     def installSteamCmd(self):
-        if self.checkInstalled():
-            print("steamcmd is already installed")
-            print("\n")
+        if self.steamCMDExec != None:
             return
         if self.isWindows:
             self.__downloadSteamCmdWin()
@@ -176,15 +171,10 @@ class SteamCMD(Steam):
         return
 
     def checkSteamCmd(self):
-        if self.checkInstalled():
+        if self.steamCMDExec != None:
             return
-        print("steamcmd binary not found. Do you want to install it now?")
-        choice = input("[Y]es/[N]o (Y)").lower()
-        if choice == "n":
-            self.osUtils.ErrorMessage()
-        elif choice == "y" or choice == "":
-            self.installSteamCmd()
-        else:
-            print("Invalid option. Please try again")
-            self.checkSteamCmd()
+        
+        if not self.osUtils.confirm("steamcmd binary not found.", "Install now?", True):
+            self.steamCmdErrorMessage()
+        self.installSteamCmd()
         

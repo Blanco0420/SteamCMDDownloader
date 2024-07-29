@@ -103,13 +103,13 @@ class OsUtils:
             self.choice(choices, default)
         return choice
 
-    def confirm(self, message: str, default: bool) -> bool:
+    def confirm(self, message: str, confirmMessage: str, default: bool = True) -> bool:
         print(message)
 
         choice = str()
         choices = ["y", "n", ""]
         while choice not in choices:
-            print("\033[1mConfirm? ", "\033[0m[Y/n]" if default else "\033[0m[y/N]" + ":")
+            print(f"\033[1m{confirmMessage} ", "\033[0m[Y/n]" if default else "\033[0m[y/N]" + ":")
             choice = input()
             if choice in choices:
                 return True if choice in ["y", ""] else False

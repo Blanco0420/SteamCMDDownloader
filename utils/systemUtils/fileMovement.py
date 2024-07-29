@@ -56,7 +56,7 @@ class FileManagement:
         extractDir = self.getDirectory()
         if os.path.exists(extractDir):
             _2 = Logger()
-            if self._os.confirm("Extract directory exists. It will be overridden", True):
+            if self._os.confirm("Extract directory exists", "Overwrite?", True):
                 shutil.rmtree(extractDir)
             else:
                 _2.logLog("Exiting program...")
