@@ -1,9 +1,10 @@
 from utils.Steam.steamUtils import Workshop, SteamCMD
 from utils.systemUtils.fileMovement import FileManagement
+from utils.systemUtils.osUtils import OsUtils
 
 def menu():
-    # choice = OsUtils().choice(["Download steam workshop mods", "Install steamcmd", "Exit"], 1)
-    choice = 4
+    choice = OsUtils().choice(["Download steam workshop mods", "Install steamcmd", "Exit"], 1)
+    # choice = 4
     match choice:
         case 1:
             Workshop().main()

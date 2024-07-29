@@ -9,6 +9,7 @@ class FileManagement:
         self.gameInfo = GameInfo()
         self.fileInfo = self.gameInfo.gameInfo["fileInformation"]
         self._os = OsUtils()
+        self.currentMovingMod = ""
 
     def getDirectory(self):
 
@@ -51,14 +52,18 @@ class FileManagement:
                 return True
         return False
 
-    def logModName(self, src: str, dest: str) -> str:
-        lastPathValues = self.fileInfo["pathToModContents"]
-        info = src.split(self._os.joinPath(["workshop", "content", self.gameInfo.gameId]))[1] 
-        middle = self._os.joinPath(lastPathValues)
-        name = info.split(middle)[1][1:].find("/" or "\\")
-        print(info[name:])
-        #FIXME: Fix this bullsh*t
-
+    def logModNameNormal(self, src: str, dest: str) -> None:
+        modName = src.split(self._os.joinPath(self.fileInfo["pathToModContents"]))[1]
+        modName = modName[1:]
+        
+        modName = modName.split(("/" or "\\"), 1)[0]
+        if self.currentMovingMod == modName:
+            return
+        else:
+            print(f"Moving... {modName}")
+            self.currentMovingMod = modName
+    def logModNameSpecial(self, src: str, dest: str) -> None:
+        print(dest)
 
     def moveFiles(self):
         extractDir = self.getDirectory()
@@ -80,17 +85,18 @@ class FileManagement:
             except KeyError:
                 modFolderPath = os.path.join(steamcmdPath, workshopFolder)
             # Check for parent folder
+            # FIXME: Mods not moving properly. E.G. 2806456685 > mods/Fort Rock Ridge/media/maps/Fort Rock Ridge
             modFolderFiles = os.listdir(modFolderPath)
             if len(modFolderFiles) > 1:
                 if not self.checkIfHasFiles(modFolderPath):
-                    shutil.copytree(modFolderPath, extractDir, dirs_exist_ok=True, copy_function=self.logModName)
+                    shutil.copytree(modFolderPath, extractDir, dirs_exist_ok=True, copy_function=self.logModNameNormal)
                     continue
                 # Has more than 1 item including files
                 modName = self.findModFolderName(modFolderPath)
                 newModDir = os.path.join(extractDir, modName)
-                shutil.copytree(modFolderPath, newModDir)
+                shutil.copytree(modFolderPath, newModDir, copy_function=self.logModNameSpecial)
                 continue
-            shutil.copytree(modFolderPath, extractDir, dirs_exist_ok=True)
+            shutil.copytree(modFolderPath, extractDir, dirs_exist_ok=True, copy_function=self.logModNameNormal)
             continue
             
         return

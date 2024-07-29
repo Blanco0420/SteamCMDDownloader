@@ -45,6 +45,7 @@ class Workshop(Steam):
         super().__init__()
         self.workshopId = GameInfo().getGameId()
         self.workshopURL = _1.getEnvVariable("WORKSHOPURL")
+        # TODO: Add steam login ability for mods that can't be downloaded with anon
         if self.isWindows:
             self.downloadString =  + "+login anonymous "
         else:
@@ -59,18 +60,18 @@ class Workshop(Steam):
         workshopElements = BeautifulSoup(_response.content, 'html.parser').findAll('div', class_="workshopItem")
 
         mod_ids = []
-        i = 0
+        # i = 0
         for x in workshopElements:
             mod_ids.append(x.find('a').get('href').split('id=')[1])
-            if i == 5:
-                break
-            i += 1
+            # if i == 5:
+            #     break
+            # i += 1
         return mod_ids
         
     def downloadSteamWorkshopMods(self):
         
         for x in self.getWorkshopIds():    
-            self.downloadString += f" +workshop_download_item {self.workshopId} {x}"
+            self.downloadString += f" +workshop_download_item {self.workshopId} {x} +validate"
 
         self.downloadString += " +quit"
         subprocess.call(self.downloadString, shell=True)
