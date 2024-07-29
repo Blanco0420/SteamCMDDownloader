@@ -51,6 +51,14 @@ class FileManagement:
                 return True
         return False
 
+    def logModName(self, src: str, dest: str) -> str:
+        lastPathValues = self.fileInfo["pathToModContents"]
+        info = src.split(self._os.joinPath(["workshop", "content", self.gameInfo.gameId]))[1] 
+        middle = self._os.joinPath(lastPathValues)
+        name = info.split(middle)[1][1:].find("/" or "\\")
+        print(info[name:])
+        #FIXME: Fix this bullsh*t
+
 
     def moveFiles(self):
         extractDir = self.getDirectory()
@@ -75,7 +83,7 @@ class FileManagement:
             modFolderFiles = os.listdir(modFolderPath)
             if len(modFolderFiles) > 1:
                 if not self.checkIfHasFiles(modFolderPath):
-                    shutil.copytree(modFolderPath, extractDir, dirs_exist_ok=True)
+                    shutil.copytree(modFolderPath, extractDir, dirs_exist_ok=True, copy_function=self.logModName)
                     continue
                 # Has more than 1 item including files
                 modName = self.findModFolderName(modFolderPath)

@@ -1,9 +1,9 @@
 from utils.Steam.steamUtils import Workshop, SteamCMD
 from utils.systemUtils.fileMovement import FileManagement
-from utils.systemUtils.osUtils import Logger, OsUtils
 
 def menu():
-    choice = OsUtils().choice(["Download steam workshop mods", "Install steamcmd", "Exit"], 1)
+    # choice = OsUtils().choice(["Download steam workshop mods", "Install steamcmd", "Exit"], 1)
+    choice = 4
     match choice:
         case 1:
             Workshop().main()
@@ -12,6 +12,9 @@ def menu():
         case 3:
             print("Exiting program...")
             exit()
+        case 4:
+            #TESTING PURPOSES ONLY!!!!
+            FileManagement().moveFiles()
     menu()
 
 menu()

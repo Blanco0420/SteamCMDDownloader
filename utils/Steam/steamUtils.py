@@ -96,6 +96,7 @@ class SteamCMD(Steam):
         print("Error installing steamcmd. Please look at the Valve page for information on how to install steamcmd for your machine.")
         print("https://developer.valvesoftware.com/wiki/SteamCMD")
         print("Exiting...")
+        exit()
 
 
     def __downloadSteamCmdWin(self):
@@ -129,7 +130,7 @@ class SteamCMD(Steam):
 
         subprocess.call(['makepkg -si --noconfirm'], shell=True)
         os.chdir('../')
-        # shutil.rmtree(os.path.join(self.cwd, "steamCmdInstaller"))
+        shutil.rmtree(os.path.join(self.cwd, "steamCmdInstaller"))
 
 
     def __installSteamCmdDeb(self):

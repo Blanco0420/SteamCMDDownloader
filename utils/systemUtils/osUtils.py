@@ -19,7 +19,6 @@ class MachineInfo:
             return {}
         
     def manualDistroBase(self):
-        # FIXME: Only check distro info once. Script is supported if steamcmd is installed
         print("Error, unable to determine distro base. Please choose from the list:")
         choice = OsUtils().choice(["Arch based", "Debian based", "Ubuntu based", "RHEL (Red-Hat Enterprise Linux) based", "Gentoo based"])
 
@@ -106,11 +105,10 @@ class OsUtils:
     def confirm(self, message: str, confirmMessage: str, default: bool = True) -> bool:
         print(message)
 
-        choice = str()
+        choice = "PLACEHOLDER"
         choices = ["y", "n", ""]
         while choice not in choices:
-            print(f"\033[1m{confirmMessage} ", "\033[0m[Y/n]" if default else "\033[0m[y/N]" + ":")
-            choice = input()
+            choice = input(f"\033[1m{confirmMessage} " + ("\033[0m[Y/n]" if default else "\033[0m[y/N]") + ":")
             if choice in choices:
                 return True if choice in ["y", ""] else False
             print("Invalid Choice. Please try again")
@@ -120,14 +118,14 @@ class OsUtils:
     def __getCwd(self) -> str:
         return os.getcwd()
 
+    # Public Functions:
+
     def getEnvVariable(self, variable: str) -> str:
         return os.getenv(variable) or None
     
     def getEnvBool(self, variable: str, default: bool) -> bool:
         _ = os.getenv(variable, str(default)).lower() in ['true', '1', 't']
         return _
-
-    # Public Functions:
 
     def isWindows(self):
         return platform.system() == "Windows"
