@@ -1,5 +1,5 @@
 import os
-from utils.gameInfo import GameInfo
+from utils.systemUtils.gameInfo import GameInfo
 from utils.systemUtils.osUtils import OsUtils, Logger
 import shutil
 

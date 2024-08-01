@@ -5,7 +5,7 @@ from utils.systemUtils.osUtils import MachineInfo
 from utils.systemUtils.fileMovement import FileManagement
 from dotenv import load_dotenv
 import os
-from utils.gameInfo import GameInfo
+from utils.systemUtils.gameInfo import GameInfo
 import shutil
 import urllib
 from utils.systemUtils.osUtils import OsUtils, Logger
@@ -13,7 +13,7 @@ import subprocess
 import git
 load_dotenv()
 
-class Steam:
+class __Steam:
     def __init__(self) -> None:
         _1 = OsUtils()
         _2 = GameInfo()
@@ -21,9 +21,9 @@ class Steam:
         self.workshopContentPath = _1.joinPath([self.steamCMDPath, "steamapps", "workshop", "content", _2.gameId])
         self.isWindows = _1.isWindows()
         self.cwd = _1.cwd
-        self.steamCMDExec = self.getSteamCMDExec()
+        self.steamCMDExec = self.__getSteamCMDExec()
 
-    def getSteamCMDExec(self):
+    def __getSteamCMDExec(self):
         _os = OsUtils()
         commands = []
         if self.isWindows:
@@ -39,7 +39,7 @@ class Steam:
                 continue
         return None
 
-class Workshop(Steam):
+class Workshop(__Steam):
     def __init__(self) -> None:
         _1 = OsUtils()
         super().__init__()
@@ -71,7 +71,7 @@ class Workshop(Steam):
     def downloadSteamWorkshopMods(self):
         
         for x in self.getWorkshopIds():    
-            self.downloadString += f" +workshop_download_item {self.workshopId} {x} +validate"
+            self.downloadString += f" +workshop_download_item {self.workshopId} {x}"
 
         self.downloadString += " +quit"
         subprocess.call(self.downloadString, shell=True)
@@ -82,16 +82,28 @@ class Workshop(Steam):
         FileManagement().moveFiles()
 
 
-class SteamCMD(Steam):
+class SteamCMD(__Steam):
     
 
     def __init__(self) -> None:
         super().__init__()
         self.machineInfo = MachineInfo()
         self.distroBase = self.machineInfo.getDistroBase()
-        self.osUtils = OsUtils()
+        self.os = OsUtils()
         pass
 
+
+    def __checkPreviousLogin(self) -> bool:
+        return os.path.exists(self.os.joinPath([self.cwd, ".loggedIn"]))
+
+    def loginToSteamCMD(self, username: str):
+        loginCommand = ["steamcmd", "+login", username]
+        
+        self.os.run(loginCommand, True)
+        
+        with open(self.os.joinPath([self.cwd, ".loggedIn"]), "w") as f:
+            f.write("LoggedIn")
+            f.close()
 
     def steamCmdErrorMessage(self) -> None:
         print("Error installing steamcmd. Please look at the Valve page for information on how to install steamcmd for your machine.")
@@ -111,7 +123,7 @@ class SteamCMD(Steam):
         
     def __installSteamCmdArch(self):
         print(f"Detected {self.distroBase} based Distro.")
-        self.osUtils.run('sudo pacman -S --needed base-devel git')
+        self.os.run('sudo pacman -S --needed base-devel git')
         
         try:
             print("Cloning steamcmd...")
@@ -123,7 +135,7 @@ class SteamCMD(Steam):
                 Logger().logCrit()
 
 
-            if self.osUtils.confirm("the folder 'steamCmdInstaller' exists already.", "Overwrite?", True):
+            if self.os.confirm("the folder 'steamCmdInstaller' exists already.", "Overwrite?", True):
                 shutil.rmtree(os.path.join(self.cwd, "steamCmdInstaller"))
                 git.Repo.clone_from('https://aur.archlinux.org/steamcmd.git', "steamCmdInstaller")
 
@@ -136,18 +148,18 @@ class SteamCMD(Steam):
 
     def __installSteamCmdDeb(self):
         print(f"Detected {self.distroBase} based distro")
-        self.osUtils.run("sudo apt update; sudo apt install software-properties-common; sudo apt-add-repository non-free -y; sudo dpkg --add-architecture i386; sudo apt update", stdout=True)
-        self.osUtils.run('echo steam steam/question select "I AGREE" | sudo debconf-set-selections')
-        self.osUtils.run('echo steam steam/license note '' | sudo debconf-set-selections')
-        self.osUtils.run('sudo apt install steamcmd -y', stdout=True)
+        self.os.run("sudo apt update; sudo apt install software-properties-common; sudo apt-add-repository non-free -y; sudo dpkg --add-architecture i386; sudo apt update", stdout=True)
+        self.os.run('echo steam steam/question select "I AGREE" | sudo debconf-set-selections')
+        self.os.run('echo steam steam/license note '' | sudo debconf-set-selections')
+        self.os.run('sudo apt install steamcmd -y', stdout=True)
 
 
     def __installSteamCmdUbuntu(self):
         print(f"Detected {self.distroBase} based distro")
-        self.osUtils.run('sudo add-apt-repository multiverse -y; sudo dpkg --add-architecture i386; sudo apt update ')
-        self.osUtils.run('echo steam steam/question select "I AGREE" | sudo debconf-set-selections')
-        self.osUtils.run('echo steam steam/license note '' | sudo debconf-set-selections')
-        self.osUtils.run('sudo apt install steamcmd -y')
+        self.os.run('sudo add-apt-repository multiverse -y; sudo dpkg --add-architecture i386; sudo apt update ')
+        self.os.run('echo steam steam/question select "I AGREE" | sudo debconf-set-selections')
+        self.os.run('echo steam steam/license note '' | sudo debconf-set-selections')
+        self.os.run('sudo apt install steamcmd -y')
 
 
     def installSteamCmd(self):
@@ -176,7 +188,9 @@ class SteamCMD(Steam):
         if self.steamCMDExec != None:
             return
         
-        if not self.osUtils.confirm("steamcmd binary not found.", "Install now?", True):
+        if not self.os.confirm("steamcmd binary not found.", "Install now?", True):
             self.steamCmdErrorMessage()
         self.installSteamCmd()
-        
+
+if __name__ == "__main__":
+    SteamCMD().loginToSteamCMD(OsUtils().getEnvVariable("USERNAME"))
